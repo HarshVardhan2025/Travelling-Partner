@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User  = require('./Models/User.js');  
 const cookieParser = require('cookie-parser');
+const imageDownloader = require('image-downloader');
 require('dotenv').config();
 const app = express();
 
@@ -14,6 +15,7 @@ const jwtSecret = 'bsbvdsvnonsvnslvbsdlvsn';
 
 app.use(express.json()); 
 app.use(cookieParser());
+app.use('/uploads', express.static(__dirname+'/uploads'));
 app.use(cors({
     credentials : true,
     origin : 'http://localhost:5173',
@@ -80,7 +82,19 @@ app.get('/profile' ,(req,res) =>{
 })
 
 app.post('/logout' ,(req,res) =>{
-    res.cookie('token', '').json(true);
+    res.cookie('token', '').json(true);  
 });
+
+app.post('/upload-by-link', async (req,res) => {
+    const {link} = req.body;
+    const newName = 'photo' + Date.now() + '.jpg';
+    await imageDownloader.image({
+      url: link,
+      dest: __dirname+'/Uploads' +newName,
+    });
+    const url = await uploadToS3('/tmp/' +newName, newName, mime.lookup('/tmp/' +newName));
+    res.json(url);
+  });
+  
 app.listen(4000);    
 ////CAxW9TQBB9vuUR8P - password for mongodb
